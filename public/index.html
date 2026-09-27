@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Panel Rewards Arcade · Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --bg:#ffffff;--bg2:#fafafa;--bg3:#f4f4f5;--line:#eaeaea;--line2:#f1f1f1;
+  --fg:#111111;--fg2:#444444;--mute:#6b6b6b;--faint:#9a9a9a;
+  --acc:#1f4e79;--acc2:#e8f0f7;--ok:#1a7f4b;--okbg:#e9f6ef;--warn:#a1620b;--warnbg:#fdf4e5;--err:#b42318;--errbg:#fdecea;
+  --H:#1f4e79;--C:#b4543a;--N:#3f7d5c;--L:#8a6a3b;
+  --sea:#eef3f6;--land:#efe7d6;--shore:#d8c9a8;--road:#8d8579;
+  --sans:'Inter',system-ui,-apple-system,sans-serif;--mono:'JetBrains Mono',ui-monospace,SFMono-Regular,monospace;--serif:'Newsreader',Georgia,serif;
+  --top:52px;--side:236px;
+}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + var(--top) + 12px);height:100%}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100%}
+button{font:inherit;color:inherit}
+
+/* top bar */
+.top{position:fixed;top:0;left:0;right:0;height:calc(var(--top) + env(safe-area-inset-top,0px));padding-top:env(safe-area-inset-top,0px);background:rgba(255,255,255,.92);backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line);z-index:50;display:flex;align-items:center}
+.top-in{display:flex;align-items:center;gap:14px;width:100%;padding:0 20px;height:var(--top)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px;white-space:nowrap}
+.mark{width:22px;height:22px;border-radius:5px;background:var(--acc);display:grid;place-items:center}
+.crumb{color:var(--faint)}
+.ver{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-radius:999px;padding:1px 8px;color:var(--mute)}
+.top-sp{flex:1}
+.top-meta{font-size:12px;color:var(--mute);white-space:nowrap}
+.btn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:6px;border:1px solid var(--line);background:#fff;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;transition:border-color .15s,background .15s}
+.btn:hover{border-color:#cfcfcf;background:var(--bg2)}
+.btn.pri{background:var(--fg);color:#fff;border-color:var(--fg)}
+.btn.pri:hover{background:#333}
+.btn.acc{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn.acc:hover{filter:brightness(1.1)}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+.btn.sm{height:28px;padding:0 10px;font-size:12px}
+
+/* layout */
+.shell{display:grid;grid-template-columns:var(--side) minmax(0,1fr);padding-top:calc(var(--top) + env(safe-area-inset-top,0px));min-height:100vh}
+.side{position:sticky;top:calc(var(--top) + env(safe-area-inset-top,0px));height:calc(100vh - var(--top) - env(safe-area-inset-top,0px));overflow-y:auto;border-right:1px solid var(--line);background:var(--bg2);padding:18px 12px 30px}
+.side h6{font-size:11px;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:.04em;margin:16px 10px 6px}
+.side h6:first-child{margin-top:0}
+.nav{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;background:none;padding:6px 10px;border-radius:6px;font-size:13.5px;color:var(--fg2);cursor:pointer}
+.nav:hover{background:var(--bg3);color:var(--fg)}
+.nav.on{background:#fff;color:var(--fg);font-weight:600;box-shadow:0 0 0 1px var(--line)}
+.nav .n{font-family:var(--mono);font-size:10.5px;color:var(--faint);width:18px}
+.nav .live{margin-left:auto;font-size:10px;font-weight:600;color:var(--ok);background:var(--okbg);border-radius:999px;padding:0 6px}
+.main{padding:32px 40px 80px;min-width:0}
+.page{display:none}.page.on{display:block}
+@media(max-width:900px){
+  .shell{grid-template-columns:1fr}
+  .side{position:sticky;height:auto;border-right:0;border-bottom:1px solid var(--line);padding:6px 10px;display:flex;gap:4px;overflow-x:auto;z-index:40;scrollbar-width:none}
+  .side::-webkit-scrollbar{display:none}
+  .side h6{display:none}
+  .nav{flex:0 0 auto;width:auto;white-space:nowrap}
+  .nav .live{display:none}
+  .main{padding:22px 16px 60px}
+  .top-meta,.crumb,.crumb+span,.ver{display:none}
+}
+
+/* type */
+.eyebrow{font-family:var(--mono);font-size:11.5px;color:var(--mute);margin-bottom:6px}
+h1{font-size:30px;line-height:1.2;font-weight:700;letter-spacing:-.02em}
+h2{font-size:21px;font-weight:650;letter-spacing:-.015em;margin:36px 0 4px}
+h2:first-child{margin-top:0}
+h3{font-size:14px;font-weight:600;margin:22px 0 8px}
+.lead{font-size:15.5px;color:var(--fg2);max-width:760px;margin-top:8px}
+p{color:var(--fg2);max-width:760px}
+.sub{color:var(--mute);font-size:13px;margin:2px 0 14px;max-width:760px}
+.mono{font-family:var(--mono)}
+.m{color:var(--mute)}
+code{font-family:var(--mono);font-size:12px;background:var(--bg3);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+
+/* components */
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.g5{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media(max-width:1200px){.g5,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.g2,.g3,.g4,.g5{grid-template-columns:1fr}}
+.panel{border:1px solid var(--line);border-radius:8px;background:#fff;min-width:0}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px;font-weight:600}
+.ph .m{font-weight:400;font-size:12px}
+.pb{padding:14px}
+.pb.tight{padding:0}
+.stat{border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+.stat .k{font-size:12px;color:var(--mute)}
+.stat .v{font-size:24px;font-weight:600;letter-spacing:-.02em;margin-top:2px}
+.stat .d{font-size:12px;color:var(--mute);margin-top:2px}
+.badge{display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 7px;border-radius:999px;font-size:11px;font-weight:500;border:1px solid var(--line);color:var(--fg2);background:#fff;white-space:nowrap}
+.badge.ok{color:var(--ok);background:var(--okbg);border-color:transparent}
+.badge.warn{color:var(--warn);background:var(--warnbg);border-color:transparent}
+.badge.err{color:var(--err);background:var(--errbg);border-color:transparent}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.callout{display:flex;gap:10px;border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:14px 0;background:var(--bg2);font-size:13px;color:var(--fg2)}
+.callout .i{flex:0 0 18px;height:18px;border-radius:50%;background:var(--acc);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;margin-top:1px}
+.callout.warn{background:var(--warnbg);border-color:#f3dfb8}.callout.warn .i{background:var(--warn)}
+.callout b{color:var(--fg)}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-weight:500;color:var(--mute);font-size:12px;padding:9px 14px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--bg2)}
+td{padding:9px 14px;border-bottom:1px solid var(--line2);color:var(--fg2);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td b{color:var(--fg);font-weight:600}
+.r{text-align:right;font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+.code{border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:12px 0;min-width:0}
+.code .fn{display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg2);border-bottom:1px solid var(--line);font-family:var(--mono);font-size:11.5px;color:var(--mute)}
+.code pre{margin:0;padding:14px;overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.6;background:#fff;color:#24292f}
+.k1{color:#cf222e}.k2{color:#0550ae}.k3{color:#0a3069}.k4{color:#6e7781}.k5{color:#8250df}
+.fig{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff;min-width:0}
+.fig .cap{font-size:12px;color:var(--mute);padding:8px 14px;border-top:1px solid var(--line);background:var(--bg2)}
+svg{display:block}
+svg text{font-family:var(--sans)}
+.pager{display:flex;justify-content:space-between;gap:12px;margin-top:48px;padding-top:18px;border-top:1px solid var(--line)}
+.pager button{flex:1;max-width:340px;text-align:left;border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:#fff;cursor:pointer}
+.pager button:hover{border-color:#cfcfcf}
+.pager button .l{font-size:12px;color:var(--mute)}
+.pager button .t{font-weight:600;margin-top:2px}
+.pager button.nx{text-align:right;margin-left:auto}
+.pager button[hidden]{display:none}
+.lens{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500}
+
+/* demo */
+.demo{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(320px,1fr);gap:14px;align-items:start}
+@media(max-width:1100px){.demo{grid-template-columns:1fr}}
+.board-wrap{position:relative;background:var(--sea)}
+.node{cursor:default}
+.node.reach{cursor:pointer}
+.node.reach .ring{stroke:var(--acc);stroke-width:2;fill:rgba(31,78,121,.12);animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{r:12}50%{r:15}}
+#token{transition:transform .45s cubic-bezier(.4,0,.2,1)}
+.hud{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);font-size:12.5px}
+.hud .sep{width:1px;height:16px;background:var(--line)}
+.act{padding:14px;min-height:230px}
+.act h4{font-size:15px;font-weight:600;margin-bottom:4px}
+.act .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.choice{display:block;width:100%;text-align:left;border:1px solid var(--line);border-radius:6px;background:#fff;padding:10px 12px;margin-top:8px;cursor:pointer;font-size:13.5px}
+.choice:hover{border-color:var(--acc);background:var(--acc2)}
+.choice.right{border-color:var(--ok);background:var(--okbg);color:var(--ok);font-weight:600}
+.choice.wrong{border-color:var(--err);background:var(--errbg);color:var(--err)}
+.choice[disabled]{cursor:default}
+.tierbtn{flex:1;min-width:90px;border:1px solid var(--line);border-radius:6px;background:#fff;padding:10px;cursor:pointer;text-align:left}
+.tierbtn:hover{border-color:var(--acc)}
+.tierbtn .p{font-family:var(--mono);font-size:18px;font-weight:600}
+.tierbtn .l{font-size:12px;color:var(--mute)}
+.mini-card{border:1px solid var(--line);border-radius:8px;padding:10px 12px;cursor:pointer;flex:1;min-width:140px;background:#fff}
+.mini-card:hover{border-color:var(--acc)}
+.pp-row{display:grid;grid-template-columns:78px 1fr 28px;gap:10px;align-items:center;padding:5px 0;font-size:12.5px}
+.ticks{display:flex;gap:3px}
+.tk{width:13px;height:13px;border-radius:3px;border:1px solid var(--line);background:#fff}
+.tk.cap{margin-right:6px}
+.log{font-family:var(--mono);font-size:11.5px;color:var(--mute);max-height:170px;overflow:auto;padding:10px 14px;line-height:1.7}
+.log div b{color:var(--fg);font-weight:500}
+.fb{margin-top:10px;padding:10px 12px;border-radius:6px;font-size:13px}
+.fb.ok{background:var(--okbg);color:var(--ok)}.fb.no{background:var(--errbg);color:var(--err)}.fb.info{background:var(--bg3);color:var(--fg2)}
+input[type=number],select{font-family:var(--mono);font-size:13px;height:32px;padding:0 10px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--fg)}
+input[type=number]{width:120px}
+input[type=range]{width:100%;accent-color:var(--acc)}
+/* sample cards */
+.scard{border:1px solid var(--line);border-radius:10px;background:#fffdf9;overflow:hidden}
+.scard .hd{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
+.scard .loc{font-family:var(--serif);font-size:17px;font-weight:600}
+.scard .tr{display:grid;grid-template-columns:24px 1fr;gap:8px;padding:9px 12px;border-bottom:1px dashed var(--line);cursor:pointer}
+.scard .tr:last-child{border-bottom:0}
+.scard .tr:hover{background:#fbf7ef}
+.scard .pip{font-family:var(--mono);font-size:11px;font-weight:600;color:#fff;border-radius:4px;height:20px;display:grid;place-items:center}
+.scard .ans{font-family:var(--mono);font-size:11.5px;color:var(--mute);margin-top:3px;filter:blur(4px);transition:filter .2s}
+.scard .tr.show .ans{filter:none;color:var(--ok)}
+.heat td.r{font-size:12px}
+.bar{height:8px;border-radius:4px;background:var(--acc)}
+.track{background:var(--bg3);border-radius:4px;overflow:hidden}
+footer{margin-top:28px;font-size:12px;color:var(--faint)}
+
+:root{--acc:#2b59c3;--acc2:#eaf0fd}
+.shell{grid-template-columns:1fr!important}
+.side{display:none!important}
+.tabsbar{position:sticky;top:calc(var(--top) + env(safe-area-inset-top,0px));z-index:40;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);display:flex;gap:2px;padding:0 24px;overflow-x:auto;scrollbar-width:none}
+.tabsbar::-webkit-scrollbar{display:none}
+.tb{flex:0 0 auto;border:0;background:none;padding:13px 12px 11px;font-size:13.5px;font-weight:500;color:var(--mute);border-bottom:2px solid transparent;cursor:pointer}
+.tb.on{color:var(--fg);border-bottom-color:var(--fg);font-weight:600}
+.tb .live{font-size:10px;font-weight:600;color:var(--ok);background:var(--okbg);border-radius:999px;padding:0 6px;margin-left:6px}
+.main{padding:26px 28px 70px}
+@media(max-width:900px){.main{padding:18px 14px 60px}.tabsbar{padding:0 10px}}
+.arcade{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:start}
+@media(max-width:1100px){.arcade{grid-template-columns:1fr}}
+.banner{display:flex;align-items:center;gap:12px;border:1px solid #cfe8d9;background:var(--okbg);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13.5px}
+.banner .pts{margin-left:auto;font-family:var(--mono);font-weight:600;color:var(--ok)}
+.picker{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}
+@media(max-width:640px){.picker{grid-template-columns:1fr}}
+.gcard{border:1px solid var(--line);border-radius:10px;padding:12px;cursor:pointer;background:#fff;text-align:left;display:flex;gap:12px;align-items:center}
+.gcard:hover{border-color:#c9c9c9}
+.gcard.on{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc2)}
+.gcard .ic{width:44px;height:44px;border-radius:9px;display:grid;place-items:center;flex:0 0 44px}
+.gcard .n{font-weight:600;font-size:14px}.gcard .d{font-size:12px;color:var(--mute)}
+.stage{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#0d1b2a}
+canvas{display:block;width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none}
+.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(10,18,30,.62);color:#fff;text-align:center;padding:20px}
+.overlay .box{max-width:420px}
+.overlay h3{font-size:22px;font-weight:700;margin:0 0 6px}
+.overlay p{color:#dfe6ef;font-size:14px;margin:0 auto 14px;max-width:none}
+.overlay .big{font-family:var(--mono);font-size:44px;font-weight:700;margin:6px 0}
+.hide{display:none}
+.trace{font-family:var(--mono);font-size:11.5px;line-height:1.6;max-height:300px;overflow:auto}
+.tr{display:grid;grid-template-columns:58px minmax(0,1fr);gap:8px;padding:5px 14px;border-bottom:1px solid var(--line2)}
+.tr .ts{color:var(--faint)}.tr.ok .m2{color:var(--ok)}.tr.err .m2{color:var(--err)}.tr .m2{color:var(--fg2);word-break:break-word}
+.kv{display:grid;grid-template-columns:1fr auto;gap:6px 10px;font-size:12.5px;padding:12px 14px}
+.kv .v{font-family:var(--mono);text-align:right}
+.meter{height:10px;border-radius:5px;background:var(--bg3);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--acc)}
+input[type=range]{width:100%;accent-color:var(--acc)}
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <div class="brand"><div class="mark" style="background:var(--acc)"><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4.2" fill="none" stroke="#fff" stroke-width="1.5"/><circle cx="6" cy="6" r="1.4" fill="#fff"/></svg></div>Panel Rewards Arcade</div>
+  <span class="ver">prototype v0.2</span>
+  <div class="top-sp"></div>
+  <span class="top-meta">Prepared by Eduardo</span>
+  <button class="btn pri" data-tab="play">▶ Play</button>
+</div></header>
+<div style="height:calc(var(--top) + env(safe-area-inset-top,0px))"></div>
+<nav class="tabsbar" id="tabs">
+  <button class="tb on" data-tab="play">Play<span class="live">live</span></button>
+  <button class="tb" data-tab="integration">Panel integration</button>
+  <button class="tb" data-tab="points">Points & fairness</button>
+  <button class="tb" data-tab="build">Build plan</button>
+</nav>
+<main class="main">
+
+<!-- PLAY -->
+<section class="page on" id="t-play">
+  <div class="banner"><span style="font-size:18px">✓</span><div><b>Survey #4821 complete.</b> Thanks, panelist P-10293. You've unlocked one bonus game.</div><span class="pts">+50 pts</span></div>
+  <div class="arcade">
+    <div>
+      <div class="picker" id="picker"></div>
+      <div class="stage"><canvas id="cv" width="800" height="480"></canvas>
+        <div class="overlay" id="ov"><div class="box" id="ovBox"></div></div>
+      </div>
+      <p class="sub" style="margin-top:8px" id="hint"></p>
+    </div>
+    <div class="grid" style="gap:14px">
+      <div class="panel"><div class="ph">Session <span class="m">one play per survey</span></div><div class="kv" id="sess"></div></div>
+      <div class="panel"><div class="ph">Points this session</div><div class="pb"><div style="display:flex;justify-content:space-between;font-size:13px"><span>Survey</span><b class="mono">50</b></div><div style="display:flex;justify-content:space-between;font-size:13px;margin-top:6px"><span>Game (5 for playing + up to 30 skill)</span><b class="mono" id="gPts">–</b></div><div class="meter" style="margin-top:10px"><i id="gBar" style="width:0%"></i></div><div style="display:flex;justify-content:space-between;font-size:14px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><b>Total</b><b class="mono" id="tPts">50</b></div></div></div>
+      <div class="panel"><div class="ph">Server log <span class="m">simulated</span></div><div class="trace" id="trace"></div></div>
+      <button class="btn" id="resetBtn">Demo only: start a new survey session</button>
+    </div>
+  </div>
+</section>
+
+<!-- INTEGRATION -->
+<section class="page" id="t-integration">
+  <div class="eyebrow">How it plugs into your panel</div>
+  <h1>Panel integration</h1>
+  <p class="sub">The survey ends, the panelist lands on the game with a signed link, the game server credits points back to your panel. No panel code changes beyond a redirect URL and a points endpoint.</p>
+  <div class="fig scroll"><svg id="flowSvg" viewBox="0 0 1100 230" width="100%" style="min-width:880px"></svg><div class="cap">Points are credited server-to-server. The browser never tells your panel how many points to add.</div></div>
+  <div class="grid g2" style="margin-top:14px">
+    <div class="code" style="margin:0"><div class="fn"><span>1 · survey end-of-survey redirect</span><span>any platform</span></div><pre>https://play.yourpanel.com/start
+  ?pid=<span class="k2">${panelist_id}</span>
+  &amp;sid=<span class="k2">${survey_id}</span>
+  &amp;ts=<span class="k2">${unix_time}</span>
+  &amp;sig=<span class="k2">${HMAC_SHA256(pid|sid|ts, SECRET)}</span>
+
+<span class="k4">// works with any survey tool that supports an end-of-survey
+// redirect with piped fields (Qualtrics, Decipher, Alchemer, …)</span></pre></div>
+    <div class="code" style="margin:0"><div class="fn"><span>2 · game server → panel points API</span><span>server-to-server</span></div><pre><span class="k1">POST</span> https://api.yourpanel.com/v1/points
+X-Signature: sha256=<span class="k3">…</span>
+
+{ <span class="k2">"panelist_id"</span>: <span class="k3">"P-10293"</span>,
+  <span class="k2">"source"</span>: <span class="k3">"arcade"</span>, <span class="k2">"survey_id"</span>: <span class="k3">"4821"</span>,
+  <span class="k2">"game"</span>: <span class="k3">"field_goal"</span>, <span class="k2">"points"</span>: <span class="k1">27</span>,
+  <span class="k2">"idempotency_key"</span>: <span class="k3">"arc_4821_P-10293"</span> }</pre></div>
+  </div>
+  <div class="panel scroll" style="margin-top:14px"><table>
+    <thead><tr><th>Option</th><th>How panelists reach the game</th><th>Best when</th></tr></thead>
+    <tbody>
+      <tr><td><b>Redirect</b> <span class="badge ok">recommended</span></td><td>survey end page redirects to the game, game redirects back to the panel dashboard</td><td>any survey platform</td></tr>
+      <tr><td><b>Embed</b></td><td>game in an iframe on your panel's "thank you" page</td><td>you control the panel site</td></tr>
+      <tr><td><b>Game hub</b></td><td>panelists bank plays and use them later from their account</td><td>you want a rewards area, not just a bonus moment</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- POINTS -->
+<section class="page" id="t-points">
+  <div class="eyebrow">Economics & integrity</div>
+  <h1>Points & fairness</h1>
+  <p class="sub">Every game has the same payout ceiling, so the points budget is predictable no matter which game a panelist picks.</p>
+  <div class="panel scroll"><table>
+    <thead><tr><th>Game</th><th>Format</th><th>For playing</th><th>Skill bonus</th><th class="r">Max</th></tr></thead>
+    <tbody>
+      <tr><td><b>Field goal</b></td><td>5 kicks, 25–55 yards, wind</td><td>5</td><td>4 + 1 per 10 yds per make, capped</td><td class="r">35</td></tr>
+      <tr><td><b>Golf drive</b></td><td>3 swings, best drive counts</td><td>5</td><td>5 / 10 / 15 / 22 / 30 by distance band</td><td class="r">35</td></tr>
+      <tr><td><b>Pool trick shot</b></td><td>6 balls, 4 shots</td><td>5</td><td>5 per ball</td><td class="r">35</td></tr>
+    </tbody>
+  </table></div>
+  <h2>Budget calculator</h2>
+  <div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(280px,.8fr)">
+    <div class="panel pb">
+      <label class="m" style="font-size:12px">Survey completes per month · <b id="cV"></b></label><input type="range" id="cIn" min="1000" max="200000" step="1000" value="40000">
+      <label class="m" style="font-size:12px;display:block;margin-top:12px">Share who play the bonus game · <b id="rV"></b></label><input type="range" id="rIn" min="10" max="100" step="5" value="65">
+      <label class="m" style="font-size:12px;display:block;margin-top:12px">Average points per play · <b id="aV"></b></label><input type="range" id="aIn" min="5" max="35" step="1" value="18">
+      <label class="m" style="font-size:12px;display:block;margin-top:12px">Value of 1 point (US cents) · <b id="vV"></b></label><input type="range" id="vIn" min="0.1" max="2" step="0.1" value="0.5">
+    </div>
+    <div class="grid" style="gap:14px;align-content:start">
+      <div class="stat"><div class="k">Bonus points issued / month</div><div class="v" id="oPts"></div></div>
+      <div class="stat"><div class="k">Cost / month</div><div class="v" id="oCost"></div><div class="d" id="oPer"></div></div>
+    </div>
+  </div>
+  <h2>Integrity controls</h2>
+  <div class="panel scroll"><table>
+    <thead><tr><th>Risk</th><th>Control</th></tr></thead>
+    <tbody>
+      <tr><td><b>Playing without finishing a survey</b></td><td>signed start link (HMAC) with a timestamp, rejected after 30 minutes</td></tr>
+      <tr><td><b>Replaying for more points</b></td><td>one session per survey + panelist, idempotent credit</td></tr>
+      <tr><td><b>Editing the score in the browser</b></td><td>server sets wind/conditions, checks duration, input count and score limits; server decides points</td></tr>
+      <tr><td><b>Bots and scripts</b></td><td>minimum human play time, input timing checks, rate limits per panelist</td></tr>
+      <tr><td><b>Duplicate credits on retries</b></td><td>idempotency key on every points call</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warn"><div class="i">!</div><div><b>Skill, not chance.</b> Every game here is skill-based, and every player gets points for playing. If points can be redeemed for cash or prizes, have counsel confirm the format fits the rules in the countries your panel runs in, since random-outcome prize games can fall under sweepstakes rules.</div></div>
+</section>
+
+<!-- BUILD -->
+<section class="page" id="t-build">
+  <div class="eyebrow">Delivery</div>
+  <h1>Build plan</h1>
+  <p class="sub">Open-source engine and art, production-grade integration, first game live in 2 weeks.</p>
+  <div class="grid g3">
+    <div class="panel pb"><div class="badge" style="display:flex;width:max-content;margin-bottom:10px">Engine</div><b>Phaser 3</b><p class="m" style="font-size:13px;margin-top:4px">MIT-licensed HTML5 game framework. Runs in any mobile or desktop browser, no app install.</p></div>
+    <div class="panel pb"><div class="badge" style="display:flex;width:max-content;margin-bottom:10px">Physics</div><b>Matter.js</b><p class="m" style="font-size:13px;margin-top:4px">MIT-licensed 2D physics for the pool table. Kicks and drives use lightweight custom ballistics.</p></div>
+    <div class="panel pb"><div class="badge" style="display:flex;width:max-content;margin-bottom:10px">Art</div><b>Kenney assets (CC0)</b><p class="m" style="font-size:13px;margin-top:4px">Public-domain sports sprites and UI, restyled in your panel's colors. Custom art optional.</p></div>
+  </div>
+  <div class="grid g2" style="margin-top:14px">
+    <div class="panel"><div class="ph">Quality targets</div><div class="scroll"><table><tbody>
+      <tr><td>Download size per game</td><td class="r">&lt; 1.5 MB</td></tr>
+      <tr><td>Ready to play on 4G</td><td class="r">&lt; 2 s</td></tr>
+      <tr><td>Frame rate, mid-range phone</td><td class="r">60 fps</td></tr>
+      <tr><td>Controls</td><td class="r">one finger or mouse</td></tr>
+      <tr><td>Session length</td><td class="r">60–90 s</td></tr>
+      <tr><td>Accessibility</td><td class="r">color-blind safe · reduced motion</td></tr>
+    </tbody></table></div></div>
+    <div class="panel"><div class="ph">Timeline</div><div class="scroll"><table><tbody>
+      <tr><td><b>Week 1</b></td><td>game framework, signed start link, server validation, points postback, game 1 playable</td></tr>
+      <tr><td><b>Week 2</b></td><td>art and sound, mobile QA, analytics, launch of game 1</td></tr>
+      <tr><td><b>+1 week each</b></td><td>games 2 and 3 on the same framework</td></tr>
+    </tbody></table></div></div>
+  </div>
+</section>
+
+<footer>Panel Rewards Arcade · prototype for proposal · prepared by Eduardo · all games in this page are hand-built with no external libraries</footer>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const cv=$('cv'),cx=cv.getContext('2d'),W=800,H=480;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+/* ---------- session (simulated server) ---------- */
+const SS={pid:'P-10293',sid:'4821',session:null,wind:null,played:false,t0:0,inputs:0,gamePts:null};
+function hash(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
+function rng(seed){let x=seed||1;return()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return (x>>>0)/4294967296}}
+let tlog0=performance.now();
+function log(m,c=''){const d=document.createElement('div');d.className='tr '+c;d.innerHTML=`<span class="ts">+${((performance.now()-tlog0)/1000).toFixed(1)}s</span><span class="m2">${m}</span>`;$('trace').appendChild(d);$('trace').scrollTop=1e6}
+function newSession(){SS.session='ses_'+Math.random().toString(36).slice(2,9);const r=rng(hash(SS.session));SS.rand=r;SS.played=false;SS.gamePts=null;tlog0=performance.now();$('trace').innerHTML='';
+  log(`GET /start?pid=${SS.pid}&sid=${SS.sid}&sig=…`);log('signature valid · link age 4 s · survey completion confirmed','ok');log(`session ${SS.session} created · 1 play`,'ok');renderSess();renderPts()}
+function renderSess(){$('sess').innerHTML=[['Panelist',SS.pid],['Survey',SS.sid],['Session',SS.session],['Plays left',SS.played?'0':'1'],['Conditions','set by server']].map(([k,v])=>`<span>${k}</span><span class="v">${v}</span>`).join('')}
+function renderPts(){const g=SS.gamePts;$('gPts').textContent=g==null?'–':g;$('gBar').style.width=g==null?'0%':(g/35*100)+'%';$('tPts').textContent=50+(g||0)}
+function submit(game,score,max,pts,minMs){const dur=performance.now()-SS.t0;
+  log(`POST /v1/results {game:"${game}", score:${score}, inputs:${SS.inputs}, ms:${Math.round(dur)}}`);
+  const checks=[['session unused',!SS.played],[`play time ${ (dur/1000).toFixed(1)} s ≥ ${minMs/1000} s`,dur>=minMs],[`inputs ${SS.inputs} plausible`,SS.inputs>=2],[`score ${score} ≤ max ${max}`,score<=max]];
+  let ok=true;checks.forEach(([n,v])=>{log((v?'✓ ':'✗ ')+n,v?'ok':'err');if(!v)ok=false});
+  if(!ok){log('rejected · no bonus points credited','err');return 0}
+  SS.played=true;SS.gamePts=pts;log(`points: 5 for playing + ${pts-5} skill = ${pts}`,'ok');
+  log(`POST panel /v1/points {panelist:"${SS.pid}", points:${pts}, idem:"arc_${SS.sid}_${SS.pid}"} → 200`,'ok');renderSess();renderPts();return pts}
+
+/* ---------- input ---------- */
+let G=null,cur='fg';const P={down:false,x:0,y:0,sx:0,sy:0};
+function pos(e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height}}
+cv.addEventListener('pointerdown',e=>{const p=pos(e);Object.assign(P,{down:true,x:p.x,y:p.y,sx:p.x,sy:p.y});cv.setPointerCapture(e.pointerId);G&&G.down&&G.down(p)});
+cv.addEventListener('pointermove',e=>{const p=pos(e);P.x=p.x;P.y=p.y;G&&G.move&&G.move(p)});
+cv.addEventListener('pointerup',e=>{const p=pos(e);P.down=false;G&&G.up&&G.up(p)});
+
+/* ---------- drawing helpers ---------- */
+function txt(s,x,y,sz=14,col='#fff',al='left',wt=600){cx.font=`${wt} ${sz}px Inter,system-ui,sans-serif`;cx.fillStyle=col;cx.textAlign=al;cx.fillText(s,x,y)}
+function pill(x,y,w,h,col){cx.fillStyle=col;cx.beginPath();cx.roundRect?cx.roundRect(x,y,w,h,h/2):cx.rect(x,y,w,h);cx.fill()}
+let banner=null;function flash(s,col){banner={s,col,t:performance.now()}}
+function drawBanner(){if(!banner)return;const a=1-(performance.now()-banner.t)/1400;if(a<=0){banner=null;return}cx.globalAlpha=Math.min(1,a*1.6);pill(W/2-130,190,260,54,'rgba(0,0,0,.55)');txt(banner.s,W/2,226,26,banner.col,'center',800);cx.globalAlpha=1}
+
+/* ================= FIELD GOAL ================= */
+const FG={name:'Field goal',dists:[25,32,40,47,55],
+  init(){this.i=0;this.made=0;this.pts=0;this.ball=null;this.state='aim';this.results=[];this.newKick()},
+  newKick(){this.d=this.dists[this.i];this.wind=Math.round((SS.rand()*2-1)*12);this.ball=null;this.state='aim';this.aimVec=null},
+  down(p){if(this.state==='aim'&&Math.hypot(p.x-400,p.y-420)<90)this.dragging=true},
+  move(p){if(this.dragging)this.aimVec={dx:p.x-P.sx,dy:p.y-P.sy}},
+  up(p){if(!this.dragging)return;this.dragging=false;const dx=p.x-P.sx,dy=p.y-P.sy;if(dy>-25){this.aimVec=null;return}SS.inputs++;
+    const power=clamp(-dy/260,0,1),aim=clamp(dx/(-dy),-0.7,0.7),req=0.3+0.55*(this.d-20)/40;
+    const lat=aim*this.d*0.9+this.wind*this.d*0.018,clear=power-req;
+    let res;if(clear<0)res='Short';else if(Math.abs(lat)<=9.25)res='Good!';else if(Math.abs(lat)<=10.6)res='Doink!';else res=lat<0?'Wide left':'Wide right';
+    this.ball={t:0,power,lat,clear,res};this.state='fly';this.aimVec=null},
+  geom(){const k=25*7.6/this.d;return{half:9.25*k,cy:150,up:95*25/this.d,ppf:k}},
+  update(dt){if(this.state!=='fly')return;const b=this.ball;b.t+=dt/1.15;if(b.t>=1){b.t=1;this.state='done';const good=b.res==='Good!';let add=0;if(good){this.made++;add=4+Math.floor(this.d/10);this.pts+=add}
+      this.results.push(good);flash(good?`GOOD! +${add}`:b.res,good?'#7CFC9A':'#ffb4a8');
+      setTimeout(()=>{this.i++;if(this.i>=this.dists.length){const pts=5+Math.min(30,this.pts);finish('field_goal',this.pts,43,pts,`${this.made} of 5 made`)}else this.newKick()},1100)}},
+  draw(){const g=this.geom();
+    let gr=cx.createLinearGradient(0,0,0,130);gr.addColorStop(0,'#1b3a66');gr.addColorStop(1,'#4d79b5');cx.fillStyle=gr;cx.fillRect(0,0,W,130);
+    cx.fillStyle='#23324a';cx.fillRect(0,92,W,40);for(let i=0;i<80;i++){cx.fillStyle=['#e63946','#f1faee','#a8dadc','#457b9d'][i%4];cx.fillRect(i*10+((i*37)%7),98+((i*13)%26),4,4)}
+    cx.fillStyle='#24622a';cx.fillRect(0,130,W,H-130);
+    cx.save();cx.beginPath();cx.moveTo(250,130);cx.lineTo(550,130);cx.lineTo(W+60,H);cx.lineTo(-60,H);cx.closePath();cx.fillStyle='#2f8a37';cx.fill();cx.clip();
+    for(let i=0;i<10;i++){if(i%2)continue;const y1=130+Math.pow(i/10,1.6)*350,y2=130+Math.pow((i+1)/10,1.6)*350;cx.fillStyle='rgba(255,255,255,.07)';cx.fillRect(0,y1,W,y2-y1)}
+    cx.strokeStyle='rgba(255,255,255,.55)';cx.lineWidth=2;for(let i=1;i<10;i++){const y=130+Math.pow(i/10,1.6)*350;cx.beginPath();cx.moveTo(0,y);cx.lineTo(W,y);cx.stroke()}
+    cx.restore();cx.strokeStyle='#fff';cx.lineWidth=3;cx.beginPath();cx.moveTo(250,130);cx.lineTo(-60,H);cx.moveTo(550,130);cx.lineTo(W+60,H);cx.stroke();
+    // posts
+    cx.strokeStyle='#ffd23f';cx.lineWidth=Math.max(3,6*25/this.d);cx.beginPath();cx.moveTo(400,g.cy+40);cx.lineTo(400,g.cy);cx.moveTo(400-g.half,g.cy);cx.lineTo(400+g.half,g.cy);cx.moveTo(400-g.half,g.cy);cx.lineTo(400-g.half,g.cy-g.up);cx.moveTo(400+g.half,g.cy);cx.lineTo(400+g.half,g.cy-g.up);cx.stroke();
+    // hud
+    pill(14,14,196,58,'rgba(0,0,0,.45)');txt(`Kick ${Math.min(this.i+1,5)} of 5 · ${this.d} yds`,26,38,14);txt(`Made ${this.made} · +${this.pts} pts`,26,60,12.5,'#cfe0ff',undefined,500);
+    pill(W-178,14,164,58,'rgba(0,0,0,.45)');txt('Wind',W-166,38,12.5,'#cfe0ff','left',500);txt(`${Math.abs(this.wind)} mph ${this.wind<0?'←':this.wind>0?'→':''}`,W-166,60,15);
+    const fx=W-60,fy=36;cx.strokeStyle='#fff';cx.lineWidth=2;cx.beginPath();cx.moveTo(fx,fy+24);cx.lineTo(fx,fy-6);cx.stroke();cx.fillStyle='#ff6b6b';cx.beginPath();const fl=clamp(this.wind,-12,12)*2.2;cx.moveTo(fx,fy-6);cx.lineTo(fx+fl,fy+1);cx.lineTo(fx,fy+8);cx.fill();
+    // tee + ball
+    cx.fillStyle='#e9e9e9';cx.fillRect(385,432,30,5);
+    if(this.state==='aim'){this.ballAt(400,418,13);if(this.aimVec&&this.aimVec.dy<0){const pw=clamp(-this.aimVec.dy/260,0,1);cx.setLineDash([6,6]);cx.strokeStyle='rgba(255,255,255,.85)';cx.lineWidth=2;cx.beginPath();cx.moveTo(400,418);cx.lineTo(400+this.aimVec.dx*1.2,418+this.aimVec.dy*1.2);cx.stroke();cx.setLineDash([]);
+        pill(290,452,220,12,'rgba(0,0,0,.35)');const req=0.3+0.55*(this.d-20)/40;pill(290,452,220*pw,12,pw>=req?'#7CFC9A':'#ffd23f');cx.fillStyle='#fff';cx.fillRect(290+220*req-1,448,2,20)}
+      else txt('Drag up from the ball and release',400,468,13,'rgba(255,255,255,.8)','center',500)}
+    else if(this.ball){const b=this.ball,t=b.t,ex=400+b.lat*g.ppf,ey=g.cy-(b.clear>=0?b.clear*110+14:b.clear*120-6);
+      const x=400+(ex-400)*t,y=418+(ey-418)*t-Math.sin(Math.PI*t)*120*b.power,r=13-9.5*t;this.ballAt(x,y,r)}
+    drawBanner()},
+  ballAt(x,y,r){cx.fillStyle='rgba(0,0,0,.25)';cx.beginPath();cx.ellipse(x,y+r*1.1,r,r*.35,0,0,7);cx.fill();cx.fillStyle='#8b4513';cx.beginPath();cx.ellipse(x,y,r*.72,r,0,0,7);cx.fill();cx.strokeStyle='#fff';cx.lineWidth=Math.max(1,r*.12);cx.beginPath();cx.moveTo(x,y-r*.45);cx.lineTo(x,y+r*.45);cx.stroke()},
+  hint:'Drag upward from the ball and let go. Drag length sets power (the white tick is what you need), drag angle sets direction. Watch the wind.'};
+
+/* ================= GOLF ================= */
+const GF={name:'Golf drive',
+  init(){this.n=0;this.best=0;this.state='ready';this.m=0;this.drives=[];this.ball=null;this.newSwing()},
+  newSwing(){this.wind=Math.round((SS.rand()*2-1)*12);this.state='ready';this.ball=null;this.pow=0;this.acc=0;this.m=0},
+  down(){if(this.state==='ready'){this.state='power';this.m=0;SS.inputs++}else if(this.state==='power'){this.pow=this.meter();this.state='accuracy';this.m=0;SS.inputs++}else if(this.state==='accuracy'){this.acc=Math.sin(this.m*9);SS.inputs++;this.launch()}},
+  meter(){return (1-Math.cos(this.m*3.4))/2},
+  launch(){const a=Math.abs(this.acc);let lie='fairway',f=1;if(a>0.75){lie='trees';f=0.62}else if(a>0.35){lie='rough';f=0.86}
+    const carry=(150+this.pow*170+this.wind*2.2)*f,roll=lie==='fairway'?18:lie==='rough'?6:2;this.ball={t:0,carry,total:Math.round(carry+roll),lie,roll};this.state='fly'},
+  update(dt){this.m+=dt;if(this.state!=='fly')return;const b=this.ball;b.t+=dt/1.7;if(b.t>=1.25){this.state='done';const d=b.total;this.drives.push(d);this.best=Math.max(this.best,d);
+      flash(`${d} yds · ${b.lie}`,b.lie==='fairway'?'#7CFC9A':'#ffd23f');setTimeout(()=>{this.n++;if(this.n>=3){const bd=this.best,sk=bd>=300?30:bd>=275?22:bd>=250?15:bd>=225?10:5;finish('golf_drive',bd,420,5+sk,`best drive ${bd} yds`)}else this.newSwing()},1200)}},
+  X(y){return 70+y*2},
+  draw(){let gr=cx.createLinearGradient(0,0,0,360);gr.addColorStop(0,'#8ec5ff');gr.addColorStop(1,'#d9efff');cx.fillStyle=gr;cx.fillRect(0,0,W,H);
+    cx.fillStyle='rgba(255,255,255,.85)';[[140,70],[420,50],[650,90]].forEach(([x,y])=>{cx.beginPath();cx.arc(x,y,18,0,7);cx.arc(x+22,y-8,22,0,7);cx.arc(x+46,y,17,0,7);cx.fill()});
+    cx.fillStyle='#a7cf8f';cx.beginPath();cx.moveTo(0,330);for(let x=0;x<=W;x+=40)cx.lineTo(x,318+Math.sin(x/90)*10);cx.lineTo(W,H);cx.lineTo(0,H);cx.fill();
+    cx.fillStyle='#5aa154';cx.fillRect(0,372,W,H-372);cx.fillStyle='#7cc36e';cx.fillRect(0,372,W,20);
+    for(let y=100;y<=350;y+=50){const x=this.X(y);cx.fillStyle='rgba(255,255,255,.85)';cx.fillRect(x-1,352,2,20);txt(String(y),x,346,11,'#2d5d2a','center',600)}
+    for(let i=0;i<5;i++){const x=120+i*150;cx.fillStyle='#3e7a3a';cx.beginPath();cx.arc(x,300,26,0,7);cx.fill();cx.fillStyle='#6b4a2b';cx.fillRect(x-3,318,6,14)}
+    cx.fillStyle='#ddd';cx.fillRect(66,368,8,6);
+    // golfer
+    cx.strokeStyle='#1b1b1b';cx.lineWidth=3;cx.beginPath();cx.arc(50,322,6,0,7);cx.moveTo(50,328);cx.lineTo(50,350);cx.lineTo(44,370);cx.moveTo(50,350);cx.lineTo(56,370);cx.stroke();
+    const sw=this.state==='power'?-this.meter()*2.4:this.state==='fly'||this.state==='done'?1.2:0;cx.beginPath();cx.moveTo(50,334);cx.lineTo(50+Math.cos(1.2+sw)*26,334+Math.sin(1.2+sw)*26);cx.stroke();
+    // ball
+    if(this.ball){const b=this.ball,t=Math.min(1,b.t),dist=b.carry*t+(b.t>1?b.roll*Math.min(1,(b.t-1)/.25):0),x=this.X(dist),h=Math.sin(Math.PI*t)*(90+b.carry*.35);
+      cx.fillStyle='rgba(255,255,255,.7)';for(let k=0;k<24;k++){const tt=t*k/24,xx=this.X(b.carry*tt),hh=Math.sin(Math.PI*tt)*(90+b.carry*.35);cx.beginPath();cx.arc(xx,368-hh,1.6,0,7);cx.fill()}
+      cx.fillStyle='rgba(0,0,0,.2)';cx.beginPath();cx.ellipse(x,372,5,2,0,0,7);cx.fill();cx.fillStyle='#fff';cx.beginPath();cx.arc(x,368-h,5,0,7);cx.fill();cx.strokeStyle='#999';cx.lineWidth=1;cx.stroke()}
+    else{cx.fillStyle='#fff';cx.beginPath();cx.arc(70,364,5,0,7);cx.fill()}
+    this.drives.forEach((d,i)=>{const x=this.X(d);cx.fillStyle='#e63946';cx.beginPath();cx.moveTo(x,372);cx.lineTo(x,352);cx.lineTo(x+10,356);cx.lineTo(x,360);cx.fill();txt(`#${i+1}`,x+2,388,10,'#fff','center',700)});
+    pill(14,14,210,58,'rgba(0,0,0,.45)');txt(`Swing ${Math.min(this.n+1,3)} of 3`,26,38,14);txt(`Best ${this.best||'–'} yds`,26,60,12.5,'#dfe',undefined,500);
+    pill(W-178,14,164,58,'rgba(0,0,0,.45)');txt('Wind',W-166,38,12.5,'#dfe','left',500);txt(`${Math.abs(this.wind)} mph ${this.wind>0?'tailwind':this.wind<0?'headwind':''}`,W-166,60,14);
+    // meters
+    const mx=240,my=424,mw=320;pill(mx,my,mw,16,'rgba(0,0,0,.35)');
+    if(this.state==='power'){pill(mx,my,mw*this.meter(),16,'#ffd23f');txt('Tap to set POWER',W/2,414,13,'#123','center',700)}
+    else if(this.state==='accuracy'){pill(mx,my,mw*this.pow,16,'#ffd23f');cx.fillStyle='rgba(124,252,154,.8)';cx.fillRect(mx+mw/2-mw*.175,my-8,mw*.35,6);const ax=mx+mw/2+Math.sin(this.m*9)*mw/2;cx.fillStyle='#fff';cx.fillRect(ax-2,my-10,4,30);txt('Tap in the green to hit it straight',W/2,414,13,'#123','center',700)}
+    else if(this.state==='ready')txt('Tap to start your swing',W/2,414,13,'#123','center',700);
+    drawBanner()},
+  hint:'Tap once to start the swing, tap again to lock power, then tap a third time when the needle is in the green for a straight shot. Best of 3 drives counts.'};
+
+/* ================= POOL ================= */
+const PL={name:'Pool trick shot',
+  T:{x:80,y:70,w:640,h:340},R:13,
+  init(){const T=this.T;this.balls=[{x:T.x+170,y:T.y+T.h/2,vx:0,vy:0,c:'#fff',cue:true}];const cols=['#f4d03f','#2e86de','#e74c3c','#8e44ad','#f39c12','#27ae60'];let k=0;const sx=T.x+450,sy=T.y+T.h/2;
+    for(let r=0;r<3;r++)for(let j=0;j<=r;j++){this.balls.push({x:sx+r*23.5,y:sy+(j-r/2)*27,vx:0,vy:0,c:cols[k],n:++k})}
+    this.shots=4;this.potted=0;this.state='aim';this.drag=null;this.pockets=[[T.x,T.y],[T.x+T.w/2,T.y-4],[T.x+T.w,T.y],[T.x,T.y+T.h],[T.x+T.w/2,T.y+T.h+4],[T.x+T.w,T.y+T.h]]},
+  cue(){return this.balls.find(b=>b.cue)},
+  down(p){if(this.state==='aim')this.drag=p},
+  move(p){if(this.drag)this.drag=p},
+  up(p){if(!this.drag||this.state!=='aim')return;const c=this.cue(),dx=c.x-p.x,dy=c.y-p.y,d=Math.hypot(dx,dy);this.drag=null;if(d<12)return;SS.inputs++;
+    const sp=Math.min(d,170)/170*1100;c.vx=dx/d*sp;c.vy=dy/d*sp;this.shots--;this.state='roll'},
+  update(dt){if(this.state!=='roll')return;const T=this.T,R=this.R,steps=4,h=dt/steps;
+    for(let s=0;s<steps;s++){for(const b of this.balls){if(b.gone)continue;b.x+=b.vx*h;b.y+=b.vy*h;const f=Math.pow(0.55,h);b.vx*=f;b.vy*=f;if(Math.hypot(b.vx,b.vy)<6){b.vx=0;b.vy=0}
+        if(b.x<T.x+R){b.x=T.x+R;b.vx=-b.vx*.82}if(b.x>T.x+T.w-R){b.x=T.x+T.w-R;b.vx=-b.vx*.82}if(b.y<T.y+R){b.y=T.y+R;b.vy=-b.vy*.82}if(b.y>T.y+T.h-R){b.y=T.y+T.h-R;b.vy=-b.vy*.82}
+        for(const [px,py] of this.pockets)if(Math.hypot(b.x-px,b.y-py)<21){b.gone=true;b.vx=b.vy=0;if(b.cue){flash('Scratch!','#ffb4a8')}else{this.potted++;flash(`In! +5`,'#7CFC9A')}}}
+      const bs=this.balls.filter(b=>!b.gone);for(let i=0;i<bs.length;i++)for(let j=i+1;j<bs.length;j++){const a=bs[i],b=bs[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);if(d<2*R&&d>0){const nx=dx/d,ny=dy/d,ov=2*R-d;a.x-=nx*ov/2;a.y-=ny*ov/2;b.x+=nx*ov/2;b.y+=ny*ov/2;
+        const p=(a.vx-b.vx)*nx+(a.vy-b.vy)*ny;if(p>0){a.vx-=p*nx;a.vy-=p*ny;b.vx+=p*nx;b.vy+=p*ny}}}}
+    if(this.balls.every(b=>b.gone||(b.vx===0&&b.vy===0))){const c=this.cue();if(c.gone){c.gone=false;c.x=T.x+170;c.y=T.y+T.h/2;c.vx=c.vy=0}
+      if(this.potted>=6||this.shots<=0){this.state='done';setTimeout(()=>finish('pool',this.potted,6,5+Math.min(30,this.potted*5),`${this.potted} of 6 balls potted`),700)}else this.state='aim'}},
+  draw(){const T=this.T;cx.fillStyle='#1d140e';cx.fillRect(0,0,W,H);cx.fillStyle='#5b3a21';cx.beginPath();cx.roundRect?cx.roundRect(T.x-28,T.y-28,T.w+56,T.h+56,18):cx.rect(T.x-28,T.y-28,T.w+56,T.h+56);cx.fill();
+    cx.fillStyle='#0f6b45';cx.fillRect(T.x,T.y,T.w,T.h);cx.strokeStyle='rgba(255,255,255,.06)';cx.beginPath();cx.moveTo(T.x+170,T.y);cx.lineTo(T.x+170,T.y+T.h);cx.stroke();
+    for(const [px,py] of this.pockets){cx.fillStyle='#050505';cx.beginPath();cx.arc(px,py,19,0,7);cx.fill()}
+    for(let i=1;i<4;i++){cx.fillStyle='#e8d9b0';cx.beginPath();cx.arc(T.x+T.w*i/4,T.y-14,2.5,0,7);cx.arc(T.x+T.w*i/4,T.y+T.h+14,2.5,0,7);cx.fill()}
+    for(const b of this.balls){if(b.gone)continue;cx.fillStyle='rgba(0,0,0,.3)';cx.beginPath();cx.arc(b.x+2,b.y+3,this.R,0,7);cx.fill();cx.fillStyle=b.c;cx.beginPath();cx.arc(b.x,b.y,this.R,0,7);cx.fill();if(b.n){cx.fillStyle='#fff';cx.beginPath();cx.arc(b.x,b.y,6,0,7);cx.fill();txt(String(b.n),b.x,b.y+3.5,9,'#111','center',700)}cx.fillStyle='rgba(255,255,255,.45)';cx.beginPath();cx.arc(b.x-4,b.y-5,3,0,7);cx.fill()}
+    const c=this.cue();if(this.state==='aim'&&this.drag&&!c.gone){const dx=c.x-this.drag.x,dy=c.y-this.drag.y,d=Math.hypot(dx,dy);if(d>8){const ux=dx/d,uy=dy/d;cx.setLineDash([5,6]);cx.strokeStyle='rgba(255,255,255,.7)';cx.lineWidth=1.5;cx.beginPath();cx.moveTo(c.x,c.y);cx.lineTo(c.x+ux*420,c.y+uy*420);cx.stroke();cx.setLineDash([]);
+        const back=12+Math.min(d,170)*.5;cx.strokeStyle='#d8b27a';cx.lineWidth=6;cx.lineCap='round';cx.beginPath();cx.moveTo(c.x-ux*back,c.y-uy*back);cx.lineTo(c.x-ux*(back+230),c.y-uy*(back+230));cx.stroke();cx.lineCap='butt';
+        pill(300,446,200,10,'rgba(255,255,255,.15)');pill(300,446,200*Math.min(d,170)/170,10,'#ffd23f')}}
+    txt(`Shots left ${this.shots}`,T.x-20,40,14);txt(`Potted ${this.potted} / 6 · +${this.potted*5} pts`,T.x+T.w+20,40,14,'#fff','right');
+    if(this.state==='aim'&&!this.drag)txt('Drag back from the cue ball, release to shoot',W/2,462,13,'rgba(255,255,255,.8)','center',500);
+    drawBanner()},
+  hint:'Press anywhere and pull back away from the white ball to aim; the further you pull, the harder the shot. Pot as many of the 6 balls as you can in 4 shots.'};
+
+const GAMES={fg:FG,golf:GF,pool:PL};
+const META={fg:['🏈','Field goal','5 kicks · wind','#e8f5e9'],golf:['⛳','Golf drive','3 swings · longest counts','#e3f2fd'],pool:['🎱','Pool trick shot','6 balls · 4 shots','#fff3e0']};
+$('picker').innerHTML=Object.entries(META).map(([k,[ic,n,d,bg]])=>`<button class="gcard ${k==='fg'?'on':''}" data-g="${k}"><span class="ic" style="background:${bg};font-size:24px">${ic}</span><span><span class="n" style="display:block">${n}</span><span class="d">${d}</span></span></button>`).join('');
+$('picker').addEventListener('click',e=>{const b=e.target.closest('.gcard');if(!b||(G&&G.running))return;cur=b.dataset.g;[...$('picker').children].forEach(x=>x.classList.toggle('on',x===b));showIntro()});
+function showIntro(){G=GAMES[cur];G.running=false;G.init();$('hint').textContent=G.hint;
+  if(SS.played){$('ovBox').innerHTML=`<h3>Bonus play used</h3><p>You've already played for survey #${SS.sid}. Your next survey unlocks another game.</p><button class="btn" id="dr" style="background:#fff;color:#111">Demo: new survey session</button>`;$('ov').classList.remove('hide');$('dr').onclick=()=>{newSession();showIntro()};return}
+  const [ic,n,d]=META[cur];$('ovBox').innerHTML=`<div style="font-size:46px">${ic}</div><h3>${n}</h3><p>${d}. Earn 5 points for playing and up to 30 more for skill.</p><button class="btn acc" id="go" style="height:40px;padding:0 20px;font-size:14px">Play now</button>`;$('ov').classList.remove('hide');
+  $('go').onclick=()=>{$('ov').classList.add('hide');SS.inputs=0;SS.t0=performance.now();G.running=true;log(`game "${cur}" started · conditions seeded by server`)}}
+function finish(game,score,max,pts,label){G.running=false;const got=submit(game,score,max,pts,4000);
+  $('ovBox').innerHTML=got?`<p style="margin:0">${label}</p><div class="big">+${got}</div><p>bonus points added to your account</p><button class="btn" id="back" style="background:#fff;color:#111">Back to my panel</button>`:`<h3>Result not accepted</h3><p>The server rejected this result.</p>`;$('ov').classList.remove('hide');
+  const b=$('back');if(b)b.onclick=()=>{log('redirect → panel dashboard');showIntro()}}
+let last=performance.now();
+function loop(now){const dt=Math.min(0.05,(now-last)/1000);last=now;if(G){if(G.running)G.update(dt);cx.clearRect(0,0,W,H);G.draw()}requestAnimationFrame(loop)}
+$('resetBtn').onclick=()=>{newSession();showIntro()};
+newSession();showIntro();requestAnimationFrame(loop);
+
+/* ---------- flow diagram ---------- */
+(function(){const box=(x,t,s,dark)=>`<rect x="${x}" y="70" width="170" height="74" rx="8" fill="${dark?'#111':'#fff'}" stroke="${dark?'#111':'#d6d6d6'}"/><text x="${x+85}" y="102" text-anchor="middle" font-size="13" font-weight="600" fill="${dark?'#fff':'#111'}">${t}</text><text x="${x+85}" y="121" text-anchor="middle" font-size="10.5" fill="${dark?'#bbb':'#6b6b6b'}">${s}</text>`;
+  let s=`<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#666"/></marker></defs>`;
+  s+=box(10,'Survey platform','survey completed')+box(240,'Signed link','pid · sid · ts · HMAC')+box(470,'Game server','session · conditions · checks',true)+box(700,'Your panel API','points credited')+box(920,'Panel dashboard','panelist sees +points');
+  s+=`<g stroke="#666" stroke-width="1.3" fill="none" marker-end="url(#a)"><path d="M180,107H238"/><path d="M410,107H468"/><path d="M640,107H698"/><path d="M870,107H918"/></g>`;
+  s+=`<g font-size="10.5" fill="#6b6b6b"><text x="182" y="98">redirect</text><text x="412" y="98">browser</text><text x="642" y="98">server→server</text><text x="872" y="98">redirect</text>
+    <text x="555" y="172" text-anchor="middle">game runs in the browser; the server decides the points</text></g>`;
+  $('flowSvg').innerHTML=s})();
+/* ---------- budget ---------- */
+function bud(){const c=+$('cIn').value,r=+$('rIn').value/100,a=+$('aIn').value,v=+$('vIn').value;$('cV').textContent=c.toLocaleString();$('rV').textContent=Math.round(r*100)+'%';$('aV').textContent=a;$('vV').textContent=v.toFixed(1)+'¢';
+  const pts=c*r*a,cost=pts*v/100;$('oPts').textContent=Math.round(pts).toLocaleString();$('oCost').textContent='$'+Math.round(cost).toLocaleString();$('oPer').textContent=`$${(cost/c).toFixed(3)} per survey complete`}
+['cIn','rIn','aIn','vIn'].forEach(i=>$(i).addEventListener('input',bud));bud();
+/* ---------- tabs ---------- */
+function tab(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on',p.id==='t-'+id));document.querySelectorAll('.tb').forEach(b=>b.classList.toggle('on',b.dataset.tab===id));try{history.replaceState(null,'','#'+id)}catch(e){}window.scrollTo({top:0})}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)tab(b.dataset.tab)});
+let h0='';try{h0=location.hash.slice(1)}catch(e){}if(['play','integration','points','build'].includes(h0))tab(h0);
+</script>
+</body>
+</html>
